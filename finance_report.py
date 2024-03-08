@@ -3,13 +3,16 @@ import yfinance as yf
 import numpy as np
 import numpy_financial as npf
 
+# ticker= 'PYPL'
+
 def get_financial_report(ticker):
     data = yf.Ticker(ticker)
     finance = data.financials.transpose()
     for col in ['Interest Expense', 'Basic EPS', 'Net Income']:
         if col not in finance.columns:
             finance[col] = 0.01
-    df_finance_raw = finance[['Basic EPS', 'Net Income', 'Interest Expense', 'EBITDA']].fillna(0.01)
+    df_finance_raw = finance[['Basic EPS', 'Net Income', 'Interest Expense', 'EBITDA']]
+    df_finance_raw = df_finance_raw.fillna(df_finance_raw.shift(-1))
 
     balance = data.balance_sheet.transpose()
     for col in ['Long Term Debt', 'Basic EPS']:

@@ -3,13 +3,13 @@ from finance_report import get_financial_report
 import pandas as pd
 
 ##### Declare input variables #######
-TICKER = 'TSLA'
-DISCOUNT_RATE = 0.1  # inflation rate
+TICKER = 'BRK-B'
+DISCOUNT_RATE = 0.12  # expected return
 MARGIN_RATE = 0.1  # accounted for evaluation of stock price value
 YEARS = 5
+df_price, df_finance = get_financial_report(TICKER)
 
 ######## Calculate key metrics #########
-df_price, df_finance = get_financial_report(TICKER)
 reasons = eligibility_check(df_finance)
 df_pred = get_pred_price_df(ticker=TICKER,
                             df_price=df_price,
@@ -24,8 +24,6 @@ if len(reasons) == 0:
 else:
     for reason in reasons:
         print(reason)
-
-print("---------------")
 
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
     print(df_pred)

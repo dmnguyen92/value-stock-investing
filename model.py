@@ -35,12 +35,12 @@ def eligibility_check(df_finance):
     return reasons
 
 
-def get_min_pe(df_price, df_finance):
+def get_effective_pe(df_price, df_finance):
     df_price['year'] = pd.DatetimeIndex(df_price.index).year
-    df_price_grp = df_price.groupby('year').mean()[['Close']]
+    df_price_grp = df_price.groupby('year').median()[['Close']]
     df_merge = pd.merge(df_price_grp, df_finance, left_index=True, right_index=True, how='inner')
     df_merge['pe_rat'] = df_merge['Close'] / df_merge['eps']
-    return df_merge['pe_rat'].min()
+    return df_merge['pe_rat'].median()
 
 
 def get_pred_price_df(ticker, df_finance, df_price, discount_rate, margin_rate, years=5):
@@ -55,7 +55,7 @@ def get_pred_price_df(ticker, df_finance, df_price, discount_rate, margin_rate, 
         print('eps does not exist')
 
     df_pred = df_pred.set_index('ticker')
-    df_pred['pe_rat'] = get_min_pe(df_price, df_finance)
+    df_pred['pe_rat'] = get_effective_pe(df_price, df_finance)
     df_pred['fv'] = df_pred['future_eps'] * df_pred['pe_rat']
     df_pred['pv'] = abs(npf.pv(discount_rate, years, 0, fv=df_pred['fv']))
     if df_pred['fv'].values[0] > 0:
