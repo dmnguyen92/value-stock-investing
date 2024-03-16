@@ -3,9 +3,9 @@ import yfinance as yf
 import numpy as np
 import numpy_financial as npf
 
-# ticker= 'PYPL'
+# ticker= 'AAPL'
 
-def get_financial_report(ticker):
+def get_financial_report_yahoo(ticker, years=10):
     data = yf.Ticker(ticker)
     finance = data.financials.transpose()
     for col in ['Interest Expense', 'Basic EPS', 'Net Income']:
@@ -31,6 +31,6 @@ def get_financial_report(ticker):
     df_finance.index = pd.to_datetime(df_finance.index)
     df_finance.index = df_finance.index.year
 
-    df_price = data.history(period='5y',interval='1mo')
+    df_price = data.history(period=f'{years}y',interval='1mo')
 
     return df_price, df_finance
