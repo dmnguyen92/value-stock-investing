@@ -20,6 +20,8 @@ import pandas_datareader.data as web
 from pandas.api.types import CategoricalDtype
 from typing import Dict
 import os
+import random
+from datetime import datetime
 
 
 def query_macrotrends(tickers: str):
@@ -55,12 +57,12 @@ def query_macrotrends(tickers: str):
             if driver.find_elements(By.CSS_SELECTOR, "div.jqx-grid-column-header:nth-child(1) > div:nth-child(1) > div:nth-child(1) > span:nth-child(1)"):
                 #financial-statements
                 driver.set_window_size(2000, 2000)
-                time.sleep(10)
+                time.sleep(10+random.uniform(-1,1))
                 fsa = driver.find_element(By.CSS_SELECTOR, "#contenttablejqxgrid").text
                 da = driver.find_element(By.CSS_SELECTOR, "#columntablejqxgrid").text
                 arrow = driver.find_element(By.CSS_SELECTOR, ".jqx-icon-arrow-right")
                 webdriver.ActionChains(driver).click_and_hold(arrow).perform()
-                time.sleep(TIME_SLEEP)
+                time.sleep(TIME_SLEEP+random.uniform(-1,1))
                 fsb = driver.find_element(By.CSS_SELECTOR, "#contenttablejqxgrid").text
                 db = driver.find_element(By.CSS_SELECTOR, "#columntablejqxgrid").text
                 #balance-sheet
@@ -70,7 +72,7 @@ def query_macrotrends(tickers: str):
                 bsa = driver.find_element(By.CSS_SELECTOR, "#contenttablejqxgrid").text
                 arrow = driver.find_element(By.CSS_SELECTOR, ".jqx-icon-arrow-right")
                 webdriver.ActionChains(driver).click_and_hold(arrow).perform()
-                time.sleep(TIME_SLEEP)
+                time.sleep(TIME_SLEEP+random.uniform(-1,1))
                 bsb = driver.find_element(By.CSS_SELECTOR, "#contenttablejqxgrid").text
                 #cash-flow
                 bsurl = geturlf+"cash-flow-statement"
@@ -79,7 +81,7 @@ def query_macrotrends(tickers: str):
                 cfa = driver.find_element(By.CSS_SELECTOR, "#contenttablejqxgrid").text
                 arrow = driver.find_element(By.CSS_SELECTOR, ".jqx-icon-arrow-right")
                 webdriver.ActionChains(driver).click_and_hold(arrow).perform()
-                time.sleep(TIME_SLEEP)
+                time.sleep(TIME_SLEEP+random.uniform(-1,1))
                 cfb = driver.find_element(By.CSS_SELECTOR, "#contenttablejqxgrid").text
                 # #financial-ratio
                 # bsurl = geturlf+"financial-ratios"
@@ -299,7 +301,7 @@ def query_macrotrends(tickers: str):
     return complete
 
 
-def get_financial_report(ticker, years):
+def get_financial_report_macro(ticker, years=10):
     # query and process finance data from macrotrends
     df_finance = query_macrotrends(ticker)
     df_finance['eps'] = df_finance['EPS - Earnings Per Share']
@@ -313,15 +315,19 @@ def get_financial_report(ticker, years):
     if not isinstance(df_finance.index, pd.DatetimeIndex):
         df_finance.index = pd.to_datetime(df_finance.index)
 
+    cur_year = datetime.now().year
+    cutoff_year = cur_year - years - 1
     df_finance.index = df_finance.index.year
     df_finance.index.name = "year"
+    df_finance = df_finance[df_finance.index >= cutoff_year]
 
-    # query and process price data from yahoo
-    ydata = yf.Ticker(ticker)
-    df_price = ydata(period=f'{years}y',interval='1mo')
-    return df_finance, df_price
+    df_finance['eps_growth'] = df_finance['eps'].pct_change()
+    df_finance['roa'] = df_finance['net_income']/df_finance['total_asset']
+    df_finance['roe'] = df_finance['net_income']/df_finance['holder_equity']
+    df_finance['interest_coverage'] = df_finance['ebitda']/df_finance['interest_expense']
 
-df_finance, df_price = get_financial_report('SKX', 5)
-    
+    return df_finance
+
+df_finance_bak = df_finance
 
     

@@ -2,8 +2,9 @@ import pandas as pd
 import yfinance as yf
 import numpy as np
 import numpy_financial as npf
+import datetime
 
-# ticker= 'AAPL'
+# ticker= 'SE'
 
 def get_financial_report_yahoo(ticker, years=10):
     data = yf.Ticker(ticker)
@@ -24,13 +25,18 @@ def get_financial_report_yahoo(ticker, years=10):
     df_finance = df_finance.apply(pd.to_numeric, errors='coerce')
     df_finance = df_finance.set_axis(['eps', 'net_income', 'interest_expense', 'ebitda', 'holder_equity', 'long_term_debt', 'total_asset'], axis=1)
     df_finance = df_finance.sort_index()
-    df_finance['eps_growth'] = df_finance['eps'].pct_change()
-    df_finance['roa'] = df_finance['net_income']/df_finance['total_asset']
-    df_finance['roe'] = df_finance['net_income']/df_finance['holder_equity']
-    df_finance['interest_coverage'] = df_finance['ebitda']/df_finance['interest_expense']
     df_finance.index = pd.to_datetime(df_finance.index)
     df_finance.index = df_finance.index.year
 
-    df_price = data.history(period=f'{years}y',interval='1mo')
+    cur_year = datetime.now().year
+    cutoff_year = cur_year - years - 1
+    df_finance.index = df_finance.index.year
+    df_finance.index.name = "year"
+    df_finance = df_finance[df_finance.index >= cutoff_year]
 
-    return df_price, df_finance
+    return df_finance
+
+def get_price_yahoo(ticker, years=10):
+    data = yf.Ticker(ticker)
+    df_price_raw = data.history(period=f'{years}y',interval='1d')
+    return df_price_raw

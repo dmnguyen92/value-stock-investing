@@ -1,14 +1,15 @@
 from model import eligibility_check, get_pred_price_df
-from finance_report_yahoo import get_financial_report_yahoo
-fro
+from finance_report_yahoo import get_financial_report_yahoo, get_price_yahoo
+from finance_report_macrotrend import get_financial_report_macro
 import pandas as pd
 
 ##### Declare input variables #######
 TICKER = 'SKX'
 DISCOUNT_RATE = 0.12  # expected return
 MARGIN_RATE = 0.1  # accounted for evaluation of stock price value
-YEARS = 5
-df_price, df_finance = get_financial_report_yahoo(TICKER)
+YEARS = 8
+df_price = get_price_yahoo(TICKER, YEARS)
+df_finance = get_financial_report_macro(TICKER)
 
 ######## Calculate key metrics #########
 reasons = eligibility_check(df_finance)

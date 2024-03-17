@@ -2,7 +2,6 @@ import numpy as np
 import numpy_financial as npf
 import pandas as pd
 
-
 def eligibility_check(df_finance):
     legiblestock = True
     reasons = []
@@ -34,11 +33,37 @@ def eligibility_check(df_finance):
         reasons.append(f'interest_coverage is less than 3: {interest_coverage:.3f}')
     return reasons
 
+def get_processed_price(df_price_raw):
+    df_price_raw['year'] = df_price_raw.index.strftime('%Y')
+    df_price_raw['month'] = df_price_raw.index.strftime('%m')
+    df_price_raw.describe()
+    df_price_raw = df_price_raw[df_price_raw['month']=='12']
+    df_price = group_df(df_price_raw, ['year'], {'Close':['mean','std']})
+    df_price.index = df_price['year']
+    df_price = df_price.drop('year', axis=1).rename(columns={'Close_mean':'Close'})
+    return df_price
+
+def get_eps_growth(cur_eps, prev_eps):
+    growth = 0
+    if prev_eps >= 0 :
+        growth = cur_eps/prev_eps - 1
+    else:
+        growth = 1 - cur_eps/prev_eps
+    growth = min(growth, 5.0)
+    growth = max(growth, -5.0)
+    return growth
+
+def get_processed_finance(df_finance_raw):
+    df_finance = df_finance_raw
+    df_finance['eps_growth'] = df_finance['eps'].pct_change()
+    df_finance['roa'] = df_finance['net_income']/df_finance['total_asset']
+    df_finance['roe'] = df_finance['net_income']/df_finance['holder_equity']
+    df_finance['interest_coverage'] = df_finance['ebitda']/df_finance['interest_expense']
+    return get_processed_finance
 
 def get_effective_pe(df_price, df_finance):
-    df_price['year'] = pd.DatetimeIndex(df_price.index).year
-    df_price_grp = df_price.groupby('year').median()[['Close']]
-    df_merge = pd.merge(df_price_grp, df_finance, left_index=True, right_index=True, how='inner')
+    df_price = get_processed_price(df_price)
+    df_merge = pd.merge(df_price, df_finance, left_index=True, right_index=True, how='inner')
     df_merge['pe_rat'] = df_merge['Close'] / df_merge['eps']
     return df_merge['pe_rat'].median()
 
@@ -66,3 +91,10 @@ def get_pred_price_df(ticker, df_finance, df_price, discount_rate, margin_rate, 
     df_pred['last_share_price'] = df_price.Close.tail(1).values[0]
     df_pred['decision'] = np.where((df_pred['last_share_price'] < df_pred['margin_price']), 'BUY', 'SELL')
     return df_pred
+
+
+def group_df(df, group_column, agg_func):
+    temp_df = df.groupby(group_column).agg(agg_func)
+    temp_df.columns = ['_'.join(col) for col in temp_df.columns.values]
+    temp_df.reset_index(inplace=True)
+    return temp_df
