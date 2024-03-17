@@ -8,7 +8,7 @@ TICKER = 'SKX'
 DISCOUNT_RATE = 0.12  # expected return
 MARGIN_RATE = 0.1  # accounted for evaluation of stock price value
 YEARS = 8
-df_price = get_price_yahoo(TICKER, YEARS)
+df_price = get_price_yahoo(TICKER, YEARS+1)
 df_finance = get_financial_report_macro(TICKER)
 
 ######## Calculate key metrics #########
